@@ -27,7 +27,7 @@ static int do_pix(int argc, char *argv[])
     int x = atoi(argv[1]);
     int y = atoi(argv[2]);
     uint8_t c = atoi(argv[3]);
-    if ((x >= 80) || (y >= 7)) {
+    if ((x >= LED_WIDTH) || (y >= LED_HEIGHT)) {
         return CMD_ARG;
     }
     framebuffer[y][x] = c;
@@ -50,17 +50,13 @@ static int do_enable(int argc, char *argv[])
     if (argc > 1) {
         enable = atoi(argv[1]) != 0;
     }
-    if (enable) {
-        led_enable();
-    } else {
-        led_disable();
-    }
+    led_enable(enable);
     return CMD_OK;
 }
 
 static int do_reboot(int argc, char *argv[])
 {
-    led_disable();
+    led_enable(false);
     ESP.restart();
     return CMD_OK;
 }
@@ -68,8 +64,6 @@ static int do_reboot(int argc, char *argv[])
 static int do_help(int argc, char *argv[]);
 static const cmd_t commands[] = {
     { "pix", do_pix, "<col> <row> [intensity] Set pixel" },
-//    { "pat", do_pat, "<pattern> Set pattern" },
-//    { "text", do_text, "<text> Draw test" },
     { "fps", do_fps, "Show FPS" },
     { "enable", do_enable, "[0|1] Enable/disable" },
     { "reboot", do_reboot, "Reboot" },
@@ -99,13 +93,24 @@ static void IRAM_ATTR vsync(int frame_nr)
 
 void setup(void)
 {
+    Serial.begin(115200);
+    Serial.println("\nGORBA");
+
     led_init(vsync);
 
     snprintf(espid, sizeof(espid), "gorba-%06x", ESP.getChipId());
     Serial.begin(115200);
     print("\n%s\n", espid);
 
+    for (int y = 5; y < 10; y++) {
+        for (int x = 10; x < 22; x++) {
+            framebuffer[y][x] = 32;
+        }
+    }
+
     EditInit(editline, sizeof(editline));
+
+    led_enable(true);
 }
 
 void loop(void)

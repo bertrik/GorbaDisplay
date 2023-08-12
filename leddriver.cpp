@@ -5,14 +5,14 @@
 #include "framebuffer.h"
 #include "leddriver.h"
 
-#define PIN_COL_DATA    D1
-#define PIN_COL_ENABLE  D2
-#define PIN_COL_CLOCK   D3
-#define PIN_COL_LATCH   D4
+#define PIN_ROW_SEL0    D1
+#define PIN_ROW_SEL1    D2
+#define PIN_ROW_SEL2    D3
 
-#define PIN_ROW_SEL0    D5
-#define PIN_ROW_SEL1    D6
-#define PIN_ROW_SEL2    D7
+#define PIN_COL_DATA    D5
+#define PIN_COL_ENABLE  D6
+#define PIN_COL_CLOCK   D7
+#define PIN_COL_LATCH   D8
 
 #define MUX_MASK ((1 << PIN_ROW_SEL0) | (1 << PIN_ROW_SEL1) | (1 << PIN_ROW_SEL2))
 
@@ -22,50 +22,39 @@ static uint8_t pwmbuf[LED_HEIGHT][LED_WIDTH];
 static int phase = 0;
 static int frame = 0;
 
+// do not use on pin D0
 #define FAST_GPIO_WRITE(pin,val) if (val) GPOS = 1<<(pin); else GPOC = 1<<(pin)
 
-static void IRAM_ATTR mux_clear(void)
-{
-    // set to invisible row
-    GPOS = MUX_MASK;
-}
-
-static void IRAM_ATTR mux_set(int select)
-{
-    uint16_t val = 0;
-    val |= (select & 1) ? (1 << PIN_ROW_SEL0) : 0;
-    val |= (select & 2) ? (1 << PIN_ROW_SEL1) : 0;
-    val |= (select & 4) ? (1 << PIN_ROW_SEL2) : 0;
-    GPOC = ~val & MUX_MASK;
-}
-
-// "horizontal" interrupt routine, displays one line
+// "horizontal" interrupt routine, displays one full row of data
 static void IRAM_ATTR led_hsync(void)
 {
-    // blank the display by selecting row 0
-    mux_clear();
+    // disable row multiplexer
+    FAST_GPIO_WRITE(PIN_ROW_SEL2, 1);
 
-    // write column data
+    // write column shift register
+    FAST_GPIO_WRITE(PIN_COL_LATCH, 0);
     for (int row = phase; row < LED_HEIGHT; row += 4) {
-        FAST_GPIO_WRITE(PIN_COL_LATCH, 0);
         for (int col = 0; col < LED_WIDTH; col++) {
-            int val = framebuffer[row][col];
+            int val = pwmbuf[row][col];
+            val += framebuffer[row][col];
             FAST_GPIO_WRITE(PIN_COL_CLOCK, 0);
-            FAST_GPIO_WRITE(PIN_COL_DATA, val > 0);
+            FAST_GPIO_WRITE(PIN_COL_DATA, val > 255);
             FAST_GPIO_WRITE(PIN_COL_CLOCK, 1);
+            pwmbuf[row][col] = val;
         }
-        FAST_GPIO_WRITE(PIN_COL_LATCH, 1);
     }
+    FAST_GPIO_WRITE(PIN_COL_LATCH, 1);
 
-    // select mux
-    mux_set(phase);
+    // activate row
+    FAST_GPIO_WRITE(PIN_ROW_SEL0, (phase & 1) == 0);
+    FAST_GPIO_WRITE(PIN_ROW_SEL1, (phase & 2) == 0);
+    FAST_GPIO_WRITE(PIN_ROW_SEL2, 0);   // enable
 
-    // next phase    
-    phase++;
-    if (phase >= 4) {
+    // increment phase for new row    
+    phase = (phase + 1) & 3;
+    if (phase == 0) {
         // last line, indicate vsync
         vsync_fn(frame++);
-        phase = 0;
     }
 }
 
@@ -80,11 +69,14 @@ void led_init(const vsync_fn_t * vsync)
     pinMode(PIN_ROW_SEL0, OUTPUT);
     pinMode(PIN_ROW_SEL1, OUTPUT);
     pinMode(PIN_ROW_SEL2, OUTPUT);
-    mux_clear();
+    digitalWrite(PIN_ROW_SEL0, 0);
+    digitalWrite(PIN_ROW_SEL1, 0);
+    digitalWrite(PIN_ROW_SEL2, 0);
 
     pinMode(PIN_COL_DATA, OUTPUT);
     digitalWrite(PIN_COL_DATA, 0);
-
+    pinMode(PIN_COL_ENABLE, OUTPUT);
+    digitalWrite(PIN_COL_ENABLE, 0);
     pinMode(PIN_COL_CLOCK, OUTPUT);
     digitalWrite(PIN_COL_CLOCK, 0);
     pinMode(PIN_COL_LATCH, OUTPUT);
@@ -105,29 +97,15 @@ void led_init(const vsync_fn_t * vsync)
 
     // initialise timer
     timer1_isr_init();
-}
 
-void led_enable(void)
-{
-    // enable columns
-    digitalWrite(PIN_COL_ENABLE, 0);
-
-    // set up timer interrupt
+    // enable timer interrupt
     timer1_disable();
     timer1_attachInterrupt(led_hsync);
-    timer1_write(1000);         // fps = 555555/number
+    timer1_write(1000);
     timer1_enable(TIM_DIV16, TIM_EDGE, TIM_LOOP);
 }
 
-void led_disable(void)
+void led_enable(bool enable)
 {
-    // detach the interrupt routine
-    timer1_detachInterrupt();
-    timer1_disable();
-
-    // select invisible row
-    mux_clear();
-
-    // disable columns
-    digitalWrite(PIN_COL_ENABLE, 1);
+    digitalWrite(PIN_COL_ENABLE, enable ? 0 : 1);
 }
