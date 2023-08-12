@@ -21,12 +21,15 @@ static uint8_t framebuffer[LED_HEIGHT][LED_WIDTH];
 
 static int do_pix(int argc, char *argv[])
 {
-    if (argc < 4) {
+    if (argc < 3) {
         return CMD_ARG;
     }
     int x = atoi(argv[1]);
     int y = atoi(argv[2]);
-    uint8_t c = atoi(argv[3]);
+    uint8_t c = 128;
+    if (argc > 3) {
+        c = atoi(argv[3]);
+    }
     if ((x >= LED_WIDTH) || (y >= LED_HEIGHT)) {
         return CMD_ARG;
     }
@@ -109,7 +112,6 @@ void setup(void)
     }
 
     EditInit(editline, sizeof(editline));
-
     led_enable(true);
 }
 
