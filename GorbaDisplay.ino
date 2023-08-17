@@ -58,7 +58,7 @@ static int do_text(int argc, char *argv[])
     }
     char *text = argv[1];
     print("Drawing '%s'\n", text);
-    draw_text(0, 0, 32, text);
+    draw_text(0, 0, 128, text);
     return CMD_OK;
 }
 
@@ -127,7 +127,7 @@ void setup(void)
     Serial.println("\nHello world!");
 
     led_init(vsync);
-    draw_init(&framebuffer[0][0], LED_WIDTH, LED_HEIGHT, 1.0);
+    draw_init(&framebuffer[0][0], LED_WIDTH, LED_HEIGHT, 2.2);
     EditInit(editline, sizeof(editline));
 
     snprintf(espid, sizeof(espid), "gorba-%06x", ESP.getChipId());
@@ -141,10 +141,10 @@ void setup(void)
     sprintf(ipstr, "%3d.%3d", ip[2], ip[3]);
     draw_text(0, 8, 64, ipstr);
 
-    led_enable(true);
-
     // initialize pixeflood server
     p.begin();
+
+    led_enable(true);
 }
 
 void loop(void)
