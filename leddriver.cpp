@@ -28,8 +28,9 @@ static int frame = 0;
 // "horizontal" interrupt routine, displays one full row of data
 static void IRAM_ATTR led_hsync(void)
 {
-    // disable row multiplexer
+    // disable row multiplexer and column enable
     FAST_GPIO_WRITE(PIN_ROW_SEL2, 1);
+    FAST_GPIO_WRITE(PIN_COL_ENABLE, 1);
 
     // write column shift register
     FAST_GPIO_WRITE(PIN_COL_LATCH, 0);
@@ -49,6 +50,7 @@ static void IRAM_ATTR led_hsync(void)
     FAST_GPIO_WRITE(PIN_ROW_SEL0, (phase & 1) == 0);
     FAST_GPIO_WRITE(PIN_ROW_SEL1, (phase & 2) == 0);
     FAST_GPIO_WRITE(PIN_ROW_SEL2, 0);   // enable
+    FAST_GPIO_WRITE(PIN_COL_ENABLE, 0);
 
     // increment phase for new row    
     phase = (phase + 1) & 3;
