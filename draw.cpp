@@ -5,8 +5,8 @@
 #include "draw.h"
 
 static uint8_t *_framebuffer;
-static int _width, _height;
 static uint8_t gamma_corr[256];
+static int _width, _height;
 static bool fliph, flipv;
 
 void draw_init(uint8_t *framebuffer, int width, int height, double gamma)
@@ -43,21 +43,21 @@ bool draw_pixel(int x, int y, uint8_t c)
     if (flipv) {
         y = _height - 1 - y;
     }
-    _framebuffer[y * _width + x] = gamma_corr[c];
+    _framebuffer[(y * _width) + x] = gamma_corr[c];
     return true;
 }
 
-static int draw_glyph(int g, int x, int y, uint8_t fg)
+static int draw_glyph(int x, int y, uint8_t fg, uint8_t glyph)
 {
     // ASCII?
-    if (g > 127) {
+    if (glyph > 127) {
         return x;
     }
 
     // draw glyph
     unsigned char aa = 0;
     for (int col = 0; col < 5; col++) {
-        unsigned char a = font[g][col];
+        unsigned char a = font[glyph][col];
 
         // skip repeating space
         if ((aa == 0) && (a == 0)) {
@@ -66,7 +66,7 @@ static int draw_glyph(int g, int x, int y, uint8_t fg)
         aa = a;
 
         // draw column
-        for (int i = 0; i < 7; y++) {
+        for (int i = 0; i < 7; i++) {
             if (a & 1) {
                 draw_pixel(x, y + i, fg);
             }
@@ -83,10 +83,10 @@ static int draw_glyph(int g, int x, int y, uint8_t fg)
     return x;
 }
 
-int draw_text(const char *text, int x, int y, uint8_t fg)
+int draw_text(int x, int y, uint8_t fg, const char *text)
 {
     for (size_t i = 0; i < strlen(text); i++) {
-        x = draw_glyph(text[i], x, y, fg);
+        x = draw_glyph(x, y, fg, text[i]);
     }
     return x;
 }

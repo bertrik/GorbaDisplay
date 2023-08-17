@@ -31,10 +31,24 @@ static int do_pix(int argc, char *argv[])
     if (argc > 3) {
         c = atoi(argv[3]);
     }
-    if ((x >= LED_WIDTH) || (y >= LED_HEIGHT)) {
+    bool r = draw_pixel(x, y, c);
+    return r ? CMD_OK : CMD_ARG;
+}
+
+static int do_clear(int argc, char *argv[])
+{
+    draw_clear();
+    return CMD_OK;
+}
+
+static int do_text(int argc, char *argv[])
+{
+    if (argc < 2) {
         return CMD_ARG;
     }
-    framebuffer[y][x] = c;
+    char *text = argv[1];
+    print("Drawing '%s'\n", text);
+    draw_text(0, 0, 32, text);
     return CMD_OK;
 }
 
@@ -68,6 +82,8 @@ static int do_reboot(int argc, char *argv[])
 static int do_help(int argc, char *argv[]);
 static const cmd_t commands[] = {
     { "pix", do_pix, "<col> <row> [intensity] Set pixel" },
+    { "text", do_text, "<text> Draw text" },
+    { "clear", do_clear, "Clear display" },
     { "fps", do_fps, "Show FPS" },
     { "enable", do_enable, "[0|1] Enable/disable" },
     { "reboot", do_reboot, "Reboot" },
@@ -101,26 +117,13 @@ void setup(void)
     Serial.println("\nHello world!");
 
     led_init(vsync);
-    draw_init((uint8_t *)framebuffer, LED_WIDTH, LED_HEIGHT, 2.2);
+    draw_init(&framebuffer[0][0], LED_WIDTH, LED_HEIGHT, 1.0);
+    EditInit(editline, sizeof(editline));
 
     snprintf(espid, sizeof(espid), "gorba-%06x", ESP.getChipId());
-    Serial.begin(115200);
     print("\n%s\n", espid);
-#if 0
-    for (int y = 5; y < 10; y++) {
-        for (int x = 10; x < 22; x++) {
-            framebuffer[y][x] = 32;
-        }
-    }
-#endif
-    draw_text("Hallo!", 0, 128, 0);
-    for (int x = 0; x < 32; x++) {
-        uint8_t v = 256 * x / 32;
-        draw_pixel(x, 10, v);
-        draw_pixel(x, 11, v);
-    }
 
-    EditInit(editline, sizeof(editline));
+    draw_text(0, 4, 32, "Hello!");
     led_enable(true);
 }
 

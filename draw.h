@@ -7,6 +7,6 @@ void draw_flip(bool horizontal, bool vertical);
 
 void draw_clear(void);
 bool draw_pixel(int x, int y, uint8_t p);
-int draw_text(const char *text, int x, int y, uint8_t fg);
+int draw_text(int x, int y, uint8_t fg, const char *text);
 
 
