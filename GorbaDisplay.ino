@@ -7,6 +7,7 @@
 
 #include "leddriver.h"
 #include "framebuffer.h"
+#include "draw.h"
 
 #include "cmdproc.h"
 #include "editline.h"
@@ -22,11 +23,6 @@ static int frame_counter;
 static uint8_t framebuffer[LED_HEIGHT][LED_WIDTH];
 
 static WiFiManager wifiManager;
-
-static void draw_pixel(int x, int y, uint8_t gray)
-{
-    framebuffer[y][x] = gray;
-}
 
 static uint8_t rgb_to_gray(uint8_t r, uint8_t g, uint8_t b)
 {
@@ -46,10 +42,24 @@ static int do_pix(int argc, char *argv[])
     if (argc > 3) {
         c = atoi(argv[3]);
     }
-    if ((x >= LED_WIDTH) || (y >= LED_HEIGHT)) {
+    bool r = draw_pixel(x, y, c);
+    return r ? CMD_OK : CMD_ARG;
+}
+
+static int do_clear(int argc, char *argv[])
+{
+    draw_clear();
+    return CMD_OK;
+}
+
+static int do_text(int argc, char *argv[])
+{
+    if (argc < 2) {
         return CMD_ARG;
     }
-    framebuffer[y][x] = c;
+    char *text = argv[1];
+    print("Drawing '%s'\n", text);
+    draw_text(0, 0, 32, text);
     return CMD_OK;
 }
 
@@ -83,6 +93,8 @@ static int do_reboot(int argc, char *argv[])
 static int do_help(int argc, char *argv[]);
 static const cmd_t commands[] = {
     { "pix", do_pix, "<col> <row> [intensity] Set pixel" },
+    { "text", do_text, "<text> Draw text" },
+    { "clear", do_clear, "Clear display" },
     { "fps", do_fps, "Show FPS" },
     { "enable", do_enable, "[0|1] Enable/disable" },
     { "reboot", do_reboot, "Reboot" },
@@ -113,23 +125,21 @@ static void IRAM_ATTR vsync(int frame_nr)
 void setup(void)
 {
     Serial.begin(115200);
-    Serial.println("\nGORBA");
+    Serial.println("\nHello world!");
 
     led_init(vsync);
+    draw_init(&framebuffer[0][0], LED_WIDTH, LED_HEIGHT, 1.0);
+    EditInit(editline, sizeof(editline));
 
     snprintf(espid, sizeof(espid), "gorba-%06x", ESP.getChipId());
-    Serial.begin(115200);
     print("\n%s\n", espid);
-
-    for (int y = 5; y < 10; y++) {
-        for (int x = 10; x < 22; x++) {
-            framebuffer[y][x] = 32;
-        }
-    }
 
     wifiManager.autoConnect(espid);
 
     EditInit(editline, sizeof(editline));
+
+    draw_text(0, 4, 32, "Hello!");
+
     led_enable(true);
 
     // initialize pixeflood server

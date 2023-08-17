@@ -13,7 +13,7 @@ private:
 	const int listen_port_binary;
 	const int width;
 	const int height;
-	void    (* draw_pixel )(int x, int y, uint8_t gray);
+	bool    (* draw_pixel )(int x, int y, uint8_t gray);
 	uint8_t (* rgb_to_gray)(uint8_t r, uint8_t g, uint8_t b);
 
 	uint32_t last_announcement { 0 };
@@ -33,7 +33,7 @@ public:
 	pixelflood(const int listen_port_ascii,
 			const int listen_port_binary,
 			const int width, const int height,
-			void (*draw_pixel)(int x, int y, uint8_t gray),
+			bool (*draw_pixel)(int x, int y, uint8_t gray),
 			uint8_t (* rgb_to_gray)(uint8_t r, uint8_t g, uint8_t b));
 	virtual ~pixelflood();
 

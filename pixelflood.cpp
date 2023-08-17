@@ -16,7 +16,7 @@ static uint8_t cnv_hex_nibble(char c)
 
 pixelflood::pixelflood(const int listen_port_ascii, const int listen_port_binary,
 		const int width, const int height,
-		void (* draw_pixel)(int x, int y, uint8_t gray),
+		bool (* draw_pixel)(int x, int y, uint8_t gray),
 		uint8_t (* rgb_to_gray)(uint8_t r, uint8_t g, uint8_t b)) :
 	listen_port_ascii(listen_port_ascii),
 	listen_port_binary(listen_port_binary),

@@ -98,14 +98,17 @@ void led_init(const vsync_fn_t * vsync)
     // initialise timer
     timer1_isr_init();
 
-    // enable timer interrupt
-    timer1_disable();
-    timer1_attachInterrupt(led_hsync);
-    timer1_write(1000);
-    timer1_enable(TIM_DIV16, TIM_EDGE, TIM_LOOP);
 }
 
 void led_enable(bool enable)
 {
+    timer1_disable();
+    if (enable) {
+        // enable timer interrupt
+        timer1_attachInterrupt(led_hsync);
+        timer1_write(1000);
+        timer1_enable(TIM_DIV16, TIM_EDGE, TIM_LOOP);
+    }
     digitalWrite(PIN_COL_ENABLE, enable ? 0 : 1);
 }
+
