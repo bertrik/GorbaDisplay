@@ -260,7 +260,7 @@ void pixelflood::poll_binary()
     if (packet_size >= sizeof buffer)
         packet_size = sizeof buffer - 1;
 
-    port_ascii.read(buffer, packet_size);
+    port_binary.read(buffer, packet_size);
 
     if (packet_size < 2)
         return;
