@@ -7,6 +7,7 @@
 
 #include "leddriver.h"
 #include "framebuffer.h"
+#include "draw.h"
 
 #include "cmdproc.h"
 #include "editline.h"
@@ -97,18 +98,26 @@ static void IRAM_ATTR vsync(int frame_nr)
 void setup(void)
 {
     Serial.begin(115200);
-    Serial.println("\nGORBA");
+    Serial.println("\nHello world!");
 
     led_init(vsync);
+    draw_init((uint8_t *)framebuffer, LED_WIDTH, LED_HEIGHT, 2.2);
 
     snprintf(espid, sizeof(espid), "gorba-%06x", ESP.getChipId());
     Serial.begin(115200);
     print("\n%s\n", espid);
-
+#if 0
     for (int y = 5; y < 10; y++) {
         for (int x = 10; x < 22; x++) {
             framebuffer[y][x] = 32;
         }
+    }
+#endif
+    draw_text("Hallo!", 0, 128, 0);
+    for (int x = 0; x < 32; x++) {
+        uint8_t v = 256 * x / 32;
+        draw_pixel(x, 10, v);
+        draw_pixel(x, 11, v);
     }
 
     EditInit(editline, sizeof(editline));
