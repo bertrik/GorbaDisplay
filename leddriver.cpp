@@ -71,12 +71,12 @@ void led_init(const vsync_fn_t * vsync)
     pinMode(PIN_ROW_SEL2, OUTPUT);
     digitalWrite(PIN_ROW_SEL0, 0);
     digitalWrite(PIN_ROW_SEL1, 0);
-    digitalWrite(PIN_ROW_SEL2, 0);
+    digitalWrite(PIN_ROW_SEL2, 1);
 
     pinMode(PIN_COL_DATA, OUTPUT);
     digitalWrite(PIN_COL_DATA, 0);
     pinMode(PIN_COL_ENABLE, OUTPUT);
-    digitalWrite(PIN_COL_ENABLE, 0);
+    digitalWrite(PIN_COL_ENABLE, 1);
     pinMode(PIN_COL_CLOCK, OUTPUT);
     digitalWrite(PIN_COL_CLOCK, 0);
     pinMode(PIN_COL_LATCH, OUTPUT);
