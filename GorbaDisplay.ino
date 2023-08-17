@@ -17,6 +17,7 @@
 static char espid[32];
 static char editline[128];
 static int frame_counter;
+static WiFiManager wifiManager;
 
 static uint8_t framebuffer[LED_HEIGHT][LED_WIDTH];
 
@@ -123,7 +124,14 @@ void setup(void)
     snprintf(espid, sizeof(espid), "gorba-%06x", ESP.getChipId());
     print("\n%s\n", espid);
 
-    draw_text(0, 4, 32, "Hello!");
+    wifiManager.autoConnect("ESP-GORBA");
+    IPAddress ip = WiFi.localIP();
+    char ipstr[32];
+    sprintf(ipstr, "%3d.%3d", ip[0], ip[1]);
+    draw_text(0, 0, 64, ipstr);
+    sprintf(ipstr, "%3d.%3d", ip[2], ip[3]);
+    draw_text(0, 8, 64, ipstr);
+
     led_enable(true);
 }
 
