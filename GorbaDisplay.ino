@@ -11,6 +11,8 @@
 #include "cmdproc.h"
 #include "editline.h"
 
+#include "pixelflood.h"
+
 #define print Serial.printf
 
 static char espid[32];
@@ -18,6 +20,20 @@ static char editline[128];
 static int frame_counter;
 
 static uint8_t framebuffer[LED_HEIGHT][LED_WIDTH];
+
+static WiFiManager wifiManager;
+
+static void draw_pixel(int x, int y, uint8_t gray)
+{
+    framebuffer[y][x] = gray;
+}
+
+static uint8_t rgb_to_gray(uint8_t r, uint8_t g, uint8_t b)
+{
+    return (r + g + b) / 3;
+}
+
+static pixelflood p(5004, 5005, LED_WIDTH, LED_HEIGHT, draw_pixel, rgb_to_gray);
 
 static int do_pix(int argc, char *argv[])
 {
@@ -111,12 +127,19 @@ void setup(void)
         }
     }
 
+    wifiManager.autoConnect(espid);
+
     EditInit(editline, sizeof(editline));
     led_enable(true);
+
+    // initialize pixeflood server
+    p.begin();
 }
 
 void loop(void)
 {
+    p.poll();
+
     // parse command line
     if (Serial.available()) {
         char c = Serial.read();
